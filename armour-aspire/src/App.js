@@ -109,7 +109,7 @@ function GameDetail({ game, onClose, onUpdate }) {
     <div style={S.screen}>
       <div style={S.header}>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#60a5fa",fontSize:14,fontWeight:700,cursor:"pointer",padding:0,marginBottom:8}}>{"< Back"}</button>
-        <div style={{fontSize:11,color:"#64748b",marginBottom:4}}>{game.date} ? {game.venue} ? {game.status==="completed"?"COMPLETED":""}</div>
+        <div style={{fontSize:11,color:"#64748b",marginBottom:4}}>{game.date} - {game.venue}{game.status==="completed"?" - COMPLETED":""}</div>
         <div style={{fontSize:15,fontWeight:800,color:"#60a5fa",marginBottom:8}}>vs {game.opponent.split(" ").slice(0,4).join(" ")}</div>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <span style={{fontSize:48,fontWeight:900,color:"#fff",lineHeight:1}}>{game.scoreFor}<span style={{color:"#334155",margin:"0 8px"}}>-</span>{game.scoreAgainst}</span>
@@ -249,6 +249,29 @@ function GameDetail({ game, onClose, onUpdate }) {
           </div>
         </Modal>
       )}
+      {showExport&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.95)",zIndex:300,display:"flex",flexDirection:"column",padding:16}}>
+          <div style={{background:"#0f172a",borderRadius:16,padding:20,border:"2px solid #7c3aed",flex:1,display:"flex",flexDirection:"column"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <div style={{fontWeight:800,fontSize:15,color:"#c4b5fd"}}>Export to Claude</div>
+              <button onClick={()=>setShowExport(false)} style={{background:"#1e3a5f",border:"none",color:"#94a3b8",borderRadius:8,width:32,height:32,cursor:"pointer",fontSize:14}}>X</button>
+            </div>
+            <p style={{color:"#94a3b8",fontSize:12,marginTop:0,marginBottom:10}}>Select all text below, copy it, paste to Claude to hardcode this game permanently.</p>
+            <textarea readOnly value={"HARDCODE THIS GAME:
+"+JSON.stringify({...game,events},null,2)}
+              onFocus={e=>e.target.select()}
+              style={{flex:1,background:"#0a1628",border:"1px solid #334155",borderRadius:10,color:"#a78bfa",fontSize:10,padding:12,fontFamily:"monospace",resize:"none",minHeight:200}} />
+            <button onClick={()=>{
+              const ta=document.querySelectorAll("textarea");
+              const last=ta[ta.length-1];
+              if(last){last.select(); try{navigator.clipboard&&navigator.clipboard.writeText(last.value);}catch(e){}}
+              setShowExport(false);
+            }} style={{marginTop:10,background:"#7c3aed",border:"none",borderRadius:10,color:"#fff",fontWeight:800,cursor:"pointer",padding:14,fontSize:14}}>
+              Copy and Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -287,7 +310,7 @@ function HomeScreen({ games, onStart, onStats, onViewGame }) {
               <button key={i} onClick={()=>onViewGame(g)} style={{background:"#0d2137",border:"2px solid #059669",borderRadius:12,padding:"14px",marginBottom:8,width:"100%",textAlign:"left",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div>
                   <div style={{fontWeight:700,fontSize:14,color:"#e2e8f0"}}>vs {g.opponent.split(" ").slice(0,3).join(" ")}</div>
-                  <div style={{fontSize:11,color:"#64748b",marginTop:2}}>{g.date} ? {g.venue} ? {g.type==="tournament"?"Cup":"League"}</div>
+                  <div style={{fontSize:11,color:"#64748b",marginTop:2}}>{g.date} - {g.venue} - {g.type==="tournament"?"Cup":"League"}</div>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
                   <span style={{fontSize:28,fontWeight:900,color:"#fff",lineHeight:1}}>{g.scoreFor}-{g.scoreAgainst}</span>
@@ -316,7 +339,7 @@ function HomeScreen({ games, onStart, onStats, onViewGame }) {
                   style={{background:"#0f172a",border:"1px solid #1e3a5f",borderRadius:12,padding:"12px 14px",marginBottom:8,width:"100%",textAlign:"left",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div>
                     <div style={{fontWeight:700,fontSize:13,color:"#e2e8f0"}}>vs {g.opp.split(" ").slice(0,3).join(" ")}</div>
-                    <div style={{fontSize:11,color:"#64748b"}}>{g.date} ? {g.venue}</div>
+                    <div style={{fontSize:11,color:"#64748b"}}>{g.date} - {g.venue}</div>
                   </div>
                   <span style={{background:g.type==="tournament"?"#7c3aed":"#1d4ed8",color:"#fff",borderRadius:6,padding:"3px 8px",fontSize:10,fontWeight:700}}>{g.type==="tournament"?"CUP":"LEAGUE"}</span>
                 </button>
@@ -397,7 +420,7 @@ function LineupScreen({ gameInfo, onKickoff, onBack }) {
         <button onClick={onBack} style={{background:"none",border:"none",color:"#60a5fa",fontSize:14,fontWeight:700,cursor:"pointer",padding:0,marginBottom:8}}>{"< Back"}</button>
         <div style={{fontSize:16,fontWeight:800,color:"#60a5fa"}}>vs {gameInfo.opponent?.split(" ").slice(0,4).join(" ")}</div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
-          <div style={{fontSize:12,color:"#94a3b8"}}>Tap players to pick XI ? tap badge to mark unavailable</div>
+          <div style={{fontSize:12,color:"#94a3b8"}}>Tap players to pick XI - tap badge to mark unavailable</div>
           <div style={{fontSize:22,fontWeight:900,color:selected.length===11?"#10b981":"#f59e0b"}}>{selected.length}<span style={{fontSize:13,color:"#64748b"}}>/11</span></div>
         </div>
       </div>
@@ -434,7 +457,7 @@ function LineupScreen({ gameInfo, onKickoff, onBack }) {
             {unavailable.map(p=>(
               <div key={p.id} onClick={e=>cycleAvail(p.id,e)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#0a0f1a",border:"1px solid #1e293b",borderRadius:10,padding:"10px 14px",marginBottom:5,cursor:"pointer"}}>
                 <span style={{fontSize:13,color:"#64748b"}}>{p.name}</span>
-                <span style={{fontSize:11,fontWeight:700,color:avail[p.id]==="injured"?"#f59e0b":"#ef4444"}}>{avail[p.id]==="injured"?"Injured":"Absent"} ? tap to restore</span>
+                <span style={{fontSize:11,fontWeight:700,color:avail[p.id]==="injured"?"#f59e0b":"#ef4444"}}>{avail[p.id]==="injured"?"Injured":"Absent"} - tap to restore</span>
               </div>
             ))}
           </div>
@@ -574,7 +597,7 @@ function GameScreen({ gameInfo, onEnd, onBack }) {
           </div>
         </div>
         <div style={{textAlign:"center"}}>
-          <div style={{fontSize:10,color:"#64748b",marginBottom:2}}>{htMode?"HALF TIME":half===1?"1st Half":"2nd Half"} ? vs {gameInfo.opponent?.split(" ").slice(0,3).join(" ")}</div>
+          <div style={{fontSize:10,color:"#64748b",marginBottom:2}}>{htMode?"HALF TIME":half===1?"1st Half":"2nd Half"} - vs {gameInfo.opponent?.split(" ").slice(0,3).join(" ")}</div>
           <div style={{fontSize:52,fontWeight:900,color:"#fff",lineHeight:1}}>
             <span style={{color:"#60a5fa"}}>{gf}</span>
             <span style={{color:"#334155",margin:"0 10px"}}>-</span>
@@ -862,7 +885,7 @@ function StatsScreen({ games, onBack, onViewGame }) {
           {games.slice().reverse().map((g,i)=>(
             <button key={i} onClick={()=>onViewGame(g)} style={{...S.card,width:"100%",textAlign:"left",cursor:"pointer",marginBottom:8}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div><div style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>vs {g.opponent.split(" ").slice(0,3).join(" ")}</div><div style={{fontSize:11,color:"#64748b"}}>{g.date} ? {g.venue}</div></div>
+                <div><div style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>vs {g.opponent.split(" ").slice(0,3).join(" ")}</div><div style={{fontSize:11,color:"#64748b"}}>{g.date} - {g.venue}</div></div>
                 <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:22,fontWeight:900,color:"#fff"}}>{g.scoreFor}-{g.scoreAgainst}</span><Badge gf={g.scoreFor} ga={g.scoreAgainst} /></div>
               </div>
             </button>
@@ -881,7 +904,7 @@ function StatsScreen({ games, onBack, onViewGame }) {
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                   <div>
                     <div style={{fontWeight:800,fontSize:15,color:String(p.id)===String(FEATURED_ID)?"#93c5fd":"#e2e8f0"}}>{p.name}{String(p.id)===String(FEATURED_ID)?" *":""}</div>
-                    <div style={{fontSize:11,color:"#64748b",marginTop:2}}>{s.gamesPlayed} games ? {s.totalMins} mins ? avg {s.avgMins}'/game</div>
+                    <div style={{fontSize:11,color:"#64748b",marginTop:2}}>{s.gamesPlayed} games - {s.totalMins} mins - avg {s.avgMins}'/game</div>
                   </div>
                   <div style={{background:parseFloat(s.net80)>0?"#064e3b":parseFloat(s.net80)<0?"#450a0a":"#1e3a5f",borderRadius:8,padding:"6px 10px",textAlign:"center",minWidth:54}}>
                     <div style={{fontSize:16,fontWeight:900,color:parseFloat(s.net80)>0?"#10b981":parseFloat(s.net80)<0?"#f87171":"#94a3b8"}}>{s.net80Str||"-"}</div>
@@ -919,7 +942,7 @@ function StatsScreen({ games, onBack, onViewGame }) {
                   {byPos[pos].map(p=>(
                     <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,...S.card,marginBottom:5}}>
                       <span style={{width:28,height:28,borderRadius:"50%",background:POS_COLOR[pos],display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:11,color:"#fff",flexShrink:0}}>{p.num}</span>
-                      <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:String(p.id)===String(FEATURED_ID)?"#93c5fd":"#e2e8f0"}}>{p.name}{String(p.id)===String(FEATURED_ID)?" *":""}</div><div style={{fontSize:10,color:"#64748b"}}>{p.gamesPlayed} games ? {p.totalMins} mins</div></div>
+                      <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:String(p.id)===String(FEATURED_ID)?"#93c5fd":"#e2e8f0"}}>{p.name}{String(p.id)===String(FEATURED_ID)?" *":""}</div><div style={{fontSize:10,color:"#64748b"}}>{p.gamesPlayed} games - {p.totalMins} mins</div></div>
                       <div style={{textAlign:"right"}}><div style={{fontSize:16,fontWeight:900,color:parseFloat(p.net80)>=0?"#10b981":"#f87171"}}>{p.net80Str}</div><div style={{fontSize:9,color:"#64748b"}}>NET/80</div></div>
                     </div>
                   ))}
@@ -968,7 +991,7 @@ function StatsScreen({ games, onBack, onViewGame }) {
               {sScorers.length>0&&<div style={S.card}><Lbl>Scorers</Lbl>{sScorers.map((p,i)=><div key={p.id} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:i<sScorers.length-1?"1px solid #1e3a5f":"none"}}><span style={{fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{p.name}</span><span style={{fontSize:18,fontWeight:800,color:"#60a5fa"}}>{p.goalsScored}</span></div>)}</div>}
               <div style={S.card}><Lbl>Minutes Played</Lbl>{sMins.map((p,i)=><div key={p.id} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:i<sMins.length-1?"1px solid #1e3a5f":"none"}}><span style={{fontSize:13,fontWeight:600,color:String(p.id)===String(FEATURED_ID)?"#93c5fd":"#e2e8f0"}}>{p.name}{String(p.id)===String(FEATURED_ID)?" *":""}</span><span style={{fontSize:13,color:"#f59e0b",fontWeight:700}}>{p.totalMins}' <span style={{fontSize:10,color:"#64748b"}}>avg {p.avgMins}'</span></span></div>)}</div>
               {opt.length>=11&&<div style={S.card}><Lbl>Optimum vs This Opponent</Lbl>{opt.map((p,i)=><div key={p.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:i<10?"1px solid #1e3a5f":"none"}}><span style={{width:20,fontSize:12,color:"#475569"}}>{i+1}.</span><span style={{flex:1,fontSize:13,fontWeight:700,color:String(p.id)===String(FEATURED_ID)?"#93c5fd":"#e2e8f0"}}>{p.name}{String(p.id)===String(FEATURED_ID)?" *":""}</span><span style={{fontSize:11,color:"#94a3b8"}}>{p.net80Str}</span></div>)}</div>}
-              {og.map((g,i)=><button key={i} onClick={()=>onViewGame(g)} style={{...S.card,width:"100%",textAlign:"left",cursor:"pointer",marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:12,color:"#64748b"}}>{g.date} ? {g.venue}</span><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18,fontWeight:900,color:"#fff"}}>{g.scoreFor}-{g.scoreAgainst}</span><Badge gf={g.scoreFor} ga={g.scoreAgainst}/></div></div></button>)}
+              {og.map((g,i)=><button key={i} onClick={()=>onViewGame(g)} style={{...S.card,width:"100%",textAlign:"left",cursor:"pointer",marginBottom:8}}><div style={{display:"flex",justifyContent:"space-between"}}><span style={{fontSize:12,color:"#64748b"}}>{g.date} - {g.venue}</span><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:18,fontWeight:900,color:"#fff"}}>{g.scoreFor}-{g.scoreAgainst}</span><Badge gf={g.scoreFor} ga={g.scoreAgainst}/></div></div></button>)}
             </>);
           })()}
         </>)}
